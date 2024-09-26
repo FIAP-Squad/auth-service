@@ -1,4 +1,5 @@
 export * from './DoctorsGateway'
-export * from './PatientsGateway'
+export * from './EmitterGateway'
 export * from './IdentityGateway'
+export * from './PatientsGateway'
 export * from './IdentitySingleton'

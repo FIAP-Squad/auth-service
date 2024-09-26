@@ -2,7 +2,15 @@ export default {
   PORT: process.env.PORT,
   DOCTORS_SERVICE: process.env.DOCTORS_SERVICE,
   PATIENTS_SERVICE: process.env.PATIENTS_SERVICE,
-  MY_SQL: {},
+  RABBIT_MQ: {
+    HOST_NAME: process.env.HOST_NAME,
+    PORT: process.env.PORT,
+    USERNAME: process.env.USERNAME,
+    PASSWORD: process.env.PASSWORD
+  },
+  MYSQL: {
+    URL: process.env.MYSQL_URL
+  },
   MONGODB: {
     URL: process.env.MONGODB_URL,
     DATABASE: process.env.MONGODB_DATABASE
