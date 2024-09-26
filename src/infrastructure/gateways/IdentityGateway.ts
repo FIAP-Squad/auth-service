@@ -1,12 +1,12 @@
 import { InitiateAuthCommand, AdminSetUserPasswordCommand, AdminCreateUserCommand, AdminDeleteUserCommand, type AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider'
 import { identitySingleton } from '@/infrastructure'
 
-enum AUTH_FLOW {
+export enum AUTH_FLOW {
   REFRESH_TOKEN_AUTH = 'REFRESH_TOKEN_AUTH',
   USER_PASSWORD_AUTH = 'USER_PASSWORD_AUTH'
 }
 
-type AuthenticationResult = {
+export type AuthenticationResult = {
   AccessToken?: string
   ExpiresIn?: number
   IdToken?: string
@@ -14,7 +14,7 @@ type AuthenticationResult = {
   RefreshToken?: string
 }
 
-type CognitoUser = {
+export type CognitoUser = {
   userPoolId: string
   email: string
   username: string
@@ -22,14 +22,22 @@ type CognitoUser = {
   customAttributes?: Record<any, any>
 }
 
-export interface IIdentityGateway {
+export interface ICreateEntityGateway {
   create: (user: CognitoUser) => Promise<AdminCreateUserCommandOutput>
-  updatePassword: ({ userPoolId, username, password }) => Promise<void>
-  refreshToken: ({ refreshToken, clientId }) => Promise<AuthenticationResult>
-  login: ({ clientId, username, password }) => Promise<AuthenticationResult>
 }
 
-export class IdentityGateway implements IIdentityGateway {
+export interface IUpdateEntityPasswordGateway {
+  updatePassword: ({ userPoolId, username, password }) => Promise<void>
+}
+
+export interface IRefreshTokenGateway {
+  refreshToken: ({ refreshToken, clientId }) => Promise<AuthenticationResult>
+}
+export interface ISignInGateway {
+  signin: ({ clientId, username, password }) => Promise<AuthenticationResult>
+}
+
+export class IdentityGateway implements ICreateEntityGateway, IUpdateEntityPasswordGateway, IRefreshTokenGateway, ISignInGateway {
   async delete ({ username, userPoolId }): Promise<void> {
     await identitySingleton.send(new AdminDeleteUserCommand({ Username: username, UserPoolId: userPoolId }))
   }
@@ -74,7 +82,7 @@ export class IdentityGateway implements IIdentityGateway {
     return token.AuthenticationResult
   }
 
-  async login ({ clientId, username, password }): Promise<AuthenticationResult> {
+  async signin ({ clientId, username, password }): Promise<AuthenticationResult> {
     const response = await identitySingleton.send(new InitiateAuthCommand({
       AuthFlow: AUTH_FLOW.USER_PASSWORD_AUTH,
       ClientId: clientId,
