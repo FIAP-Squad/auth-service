@@ -21,17 +21,17 @@ export class CreateBusinessPartner implements ICreateBusinessPartner {
   async execute ({ type, email, password, customAttributes }: IdentityProperties): Promise<void> {
     const { userPoolId, queue } = await this._DAO.load(type)
     const { User } = await this._gateway.create({ userPoolId, username: email, email, password, customAttributes })
-    // if (User) {
-    //   await this._emitter.publish({
-    //     queue,
-    //     message: {
-    //       type,
-    //       properties: {
-    //         email,
-    //         customAttributes
-    //       }
-    //     }
-    //   })
-    // }
+    if (User.Attributes) {
+      await this._emitter.publish({
+        queue,
+        message: {
+          type,
+          properties: {
+            email,
+            customAttributes
+          }
+        }
+      })
+    }
   }
 }

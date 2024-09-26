@@ -2,6 +2,12 @@ import { type EventMapParams, type IEmitterGateway, type IEventMapDAO, type ICre
 import { type AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider'
 import { CreateBusinessPartner } from '@/usecases'
 
+const mockIdentity = (): any => ({
+  User: {
+    Attributes: 'any_user'
+  }
+})
+
 const mockEventParams = (): any => ({
   userPoolId: 'any_user_pool_Id',
   queue: 'any_queue'
@@ -25,9 +31,17 @@ const mockGatewayParams = (): any => ({
   customAttributes: mockUseCaseParams().customAttributes
 })
 
-const mockIdentity = (): any => ({
-  User: {
-    Username: 'any_user'
+const mockQueueEvent = (): any => ({
+  queue: mockEventParams().queue,
+  message: {
+    type: mockUseCaseParams().type,
+    properties: {
+      email: mockUseCaseParams().email,
+      customAttributes: {
+        cpf: mockUseCaseParams().customAttributes.cpf,
+        crm: mockUseCaseParams().customAttributes.crm
+      }
+    }
   }
 })
 
@@ -109,5 +123,23 @@ describe('Create Business Partner', () => {
     const spy = jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(mockGatewayParams())
+  })
+
+  test('Show throw if Emitter throw ', async () => {
+    const { sut, gatewayStub, DAOStub, emitterStub } = mockSut()
+    jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
+    jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(emitterStub, 'publish').mockReturnValueOnce(Promise.reject(new Error()))
+    const promise = sut.execute(mockUseCaseParams())
+    await expect(promise).rejects.toThrow()
+  })
+
+  test('Show call Emitter with correct values', async () => {
+    const { sut, gatewayStub, DAOStub, emitterStub } = mockSut()
+    jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
+    jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    const spy = jest.spyOn(emitterStub, 'publish')
+    await sut.execute(mockUseCaseParams())
+    expect(spy).toHaveBeenCalledWith(mockQueueEvent())
   })
 })
