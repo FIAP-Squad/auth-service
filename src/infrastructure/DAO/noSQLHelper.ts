@@ -16,6 +16,7 @@ export const noSQLHelper = {
   },
 
   getCollection (name: string): Collection {
+    console.log(env.MONGODB.DATABASE)
     return this.client.db(env.MONGODB.DATABASE).collection(name)
   },
 

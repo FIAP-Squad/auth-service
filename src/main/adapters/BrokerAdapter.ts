@@ -1,27 +1,23 @@
 import amqp, { type Channel, type Connection } from 'amqplib'
 import env from '@/main/config/env'
-
-export type BrokerParams = {
-  hostname: string
-  port: number
-  username: string
-  password: string
-}
+import { type IHandler } from '@/infrastructure'
 
 export interface IBrokerAdapter {
   connect: () => Promise<void>
   disconnect: () => Promise<void>
-  sendToQueue: ({ queue, message }) => Promise<void>
-  subscribe: (queue: string, handle: (msg: any) => void) => Promise<void>
+  subscribe: (queue: string, handle: IHandler) => Promise<void>
+  publish: ({ queue, message }) => Promise<void>
+  run: () => Promise<void>
 }
 
-export class BrokerAdapter {
+export class BrokerClient implements IBrokerAdapter {
   private connection!: Connection
   private channel!: Channel
-  private readonly hostname: string = String(env.RABBIT_MQ.HOST_NAME)
-  private readonly port: number = Number(env.RABBIT_MQ.PORT)
-  private readonly username: string = String(env.RABBIT_MQ.USERNAME)
-  private readonly password: string = String(env.RABBIT_MQ.PASSWORD)
+  private readonly _HOST: string = env.RABBIT_MQ.HOST_NAME
+  private readonly _PORT: number = Number.parseInt(env.RABBIT_MQ.PORT)
+  private readonly _USERNAME: string = env.RABBIT_MQ.USERNAME
+  private readonly _PASSWORD: string = env.RABBIT_MQ.PASSWORD
+  private readonly handlers: Map<string, IHandler> = new Map<string, IHandler>()
 
   private async executeWithCatch<T> (operation: () => Promise<T>, errorMessage: string): Promise<T | undefined> {
     try {
@@ -36,10 +32,10 @@ export class BrokerAdapter {
     await this.executeWithCatch(async () => {
       this.connection = await amqp.connect({
         protocol: 'amqps',
-        hostname: this.hostname,
-        port: this.port,
-        username: this.username,
-        password: this.password
+        hostname: this._HOST,
+        port: this._PORT,
+        username: this._USERNAME,
+        password: this._PASSWORD
       })
       this.channel = await this.connection.createChannel()
     }, 'Failed to connect to Message Queue')
@@ -52,26 +48,33 @@ export class BrokerAdapter {
     }, 'Failed to disconnect from Message Queue')
   }
 
-  async sendToQueue ({ queue, message }): Promise<void> {
+  async subscribe (queue: string, handler: IHandler): Promise<void> {
     await this.executeWithCatch(async () => {
       await this.channel.assertQueue(queue, { durable: true })
-      await this.channel.sendToQueue(queue, Buffer.from(message), { persistent: true })
-    }, 'Failed to send message to queue')
+      this.handlers.set(queue, handler)
+    }, `Failed to subscribe to queue ${queue}`)
   }
 
-  async subscribe (queue: string, handle: (msg: any) => void): Promise<void> {
+  async publish ({ queue, message }): Promise<void> {
     await this.executeWithCatch(async () => {
       await this.channel.assertQueue(queue, { durable: true })
-      await this.channel.consume(queue, (message: any) => {
+      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)))
+      console.log(`Message sent to queue: ${queue}`)
+    }, `Failed to publish message to queue ${queue}`)
+  }
+
+  async run (): Promise<void> {
+    for (const [queue, handler] of this.handlers.entries()) {
+      await this.channel.consume(queue, async (message: any) => {
         if (message) {
           const messageContent = message.content.toString()
-          console.log(`Mensagem recebida na fila ${queue}: ${messageContent}`)
-          handle(messageContent)
+          console.log(`Message received through queue: ${queue}: ${messageContent}`)
+          await handler.handle(messageContent)
           this.channel.ack(message)
         }
       })
-    }, `Failed to subscribe to queue ${queue}`)
+    }
   }
 }
 
-export const adaptBroker = new BrokerAdapter()
+export const brokerClient = new BrokerClient()
