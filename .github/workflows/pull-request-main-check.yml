@@ -43,7 +43,7 @@ jobs:
 
       - name: Install dependencies
         id: install-dependencies
-        run: npm ci
+        run: npm ci 
 
       - name: Automated Tests
         id: automated-tests
