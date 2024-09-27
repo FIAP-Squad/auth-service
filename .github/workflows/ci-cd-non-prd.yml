@@ -1,8 +1,8 @@
-name: (Post-PR Approval) - Build and Push Docker Image
+name: Post-PR Approval - Build and Push Docker Image
 
 on:
   workflow_run:
-      workflows: ["(Health Check) main - Pull Request"]
+      workflows: ["Health Check main - Pull Request"]
       types:
           - completed
 
