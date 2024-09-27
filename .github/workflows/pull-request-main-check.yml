@@ -1,5 +1,10 @@
 name: (Health Check) main - Pull Request
 on:
+  pull_request_target:
+    types:
+      - reopened
+      - synchronize
+      
   pull_request:
     types:
       - opened
