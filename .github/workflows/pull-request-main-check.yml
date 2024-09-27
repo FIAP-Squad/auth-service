@@ -74,31 +74,6 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.verbose=true
 
-      - name: Post Test and Quality Results
-        uses: mshick/add-pr-comment@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-token-user-login: 'github-actions[bot]'
-          message: |
-            ## Checking if the code is healthy and with quality
-            
-            - [x] Automated Tests: `${{ steps.automated-tests.outcome }}`.
-            - [x] SonarQube Quality Gate: `${{ steps.sonar-qube-quality.outcome }}`.
-
-            ### Test Result:
-
-            <details><summary>Show Results</summary>
-
-            *Test summary here*
-
-            </details>
-
-            ### Quality Gate:
-
-            *SonarQube quality gates result here*
-
-            *Pushed by: @${{ github.actor }}, Action: ${{ github.event_name }}*
-
       - name: Post Test Failure
         if: steps.automated-tests.outcome == 'failure'
         uses: mshick/add-pr-comment@v1

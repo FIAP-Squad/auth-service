@@ -15,7 +15,6 @@ permissions:
   contents: write
 env:
   GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
-  GITHUB_OWNER: ${{ vars.ACTIONS_GITHUB_OWNER }}
 jobs:
   inform:
     name: Information
@@ -73,6 +72,7 @@ jobs:
             -Dsonar.exclusions=node_modules/**,src/main/**,src/core/**,src/domain/**,src/adapters/**,**\*.spec.ts,**\*.test.ts,
             -Dsonar.typescript.tsconfigPath=tsconfig.json
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.verbose=true
             -Dsonar.verbose=true
 
       - name: Fetch SonarQube Results
