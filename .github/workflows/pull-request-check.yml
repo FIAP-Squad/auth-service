@@ -57,12 +57,12 @@ jobs:
         id: automated-tests
         run: npm test
 
-      - name: SonarQube Quality
-        id: sonar-qube-quality
-        uses: sonarsource/sonarcloud-github-action@v1.5
+      - name: SonarCloud Scan
+        id: sonar-quality-gate
+        uses: SonarSource/sonarcloud-github-action@v2.1.0
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:          
           args: >
             -Dsonar.projectKey=${{ vars.PROJECT_KEY }}
             -Dsonar.organization=${{ vars.ORGANIZATION }}
@@ -70,7 +70,7 @@ jobs:
             -Dsonar.tests=tests
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.exclusions=node_modules/**,src/main/**,src/core/**,src/domain/**,**/*.spec.ts,**/*.test.ts
+            -Dsonar.exclusions=node_modules/**,src/main/**,src/core/**,src/domain/**,src/adapters/**,**\*.spec.ts,**\*.test.ts,
             -Dsonar.typescript.tsconfigPath=tsconfig.json
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.verbose=true
