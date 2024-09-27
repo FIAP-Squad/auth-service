@@ -1,0 +1,132 @@
+name: (Health Check) - Pull Request
+on:
+  pull_request_target:
+    types:
+      - reopened
+      - synchronize
+      
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'qa'
+permissions:
+  pull-requests: write
+  contents: write
+env:
+  GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+jobs:
+  inform:
+    name: Information
+    runs-on: ubuntu-latest     
+    steps:
+      - name: Initialize pull request check
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## Pull Request Validation
+
+            ### :bulb: Initializing the check
+
+            #### All component files that have been committed will be validated
+            
+            *Wait for the jobs to run.*
+            *After running the jobs, the results will be displayed here below momentarily...*
+
+            *Pushed by: @${{ github.actor }}, Action: ${{ github.event_name }}*
+  
+  check_code:
+    needs: inform
+    name: Code Review Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        id: install-dependencies
+        run: npm ci
+
+      - name: Automated Tests
+        id: automated-tests
+        run: npm test
+
+      - name: SonarCloud Scan
+        id: sonar-quality-gate
+        uses: SonarSource/sonarcloud-github-action@v2.1.0
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:          
+          args: >
+            -Dsonar.projectKey=${{ vars.PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.exclusions=node_modules/**,src/main/**,src/core/**,src/domain/**,src/adapters/**,**\*.spec.ts,**\*.test.ts,
+            -Dsonar.typescript.tsconfigPath=tsconfig.json
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.verbose=true
+            -Dsonar.verbose=true
+
+      - name: Fetch SonarQube Results
+        id: sonar-results
+        run: |
+          curl -u ${{ secrets.SONAR_TOKEN }} "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ vars.PROJECT_KEY }}" > sonar-report.json
+        continue-on-error: true
+
+      - name: Parse SonarQube Results
+        id: parse-sonar-results
+        run: |
+          QUALITY_STATUS=$(cat sonar-report.json | jq -r '.projectStatus.status')
+          BUGS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="bugs").actualValue')
+          VULNERABILITIES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="vulnerabilities").actualValue')
+          CODE_SMELLS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="code_smells").actualValue')
+          COVERAGE=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="coverage").actualValue')
+          DUPLICATED_LINES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="duplicated_lines_density").actualValue')
+
+          echo "QUALITY_STATUS=$QUALITY_STATUS" >> $GITHUB_ENV
+          echo "BUGS=$BUGS" >> $GITHUB_ENV
+          echo "VULNERABILITIES=$VULNERABILITIES" >> $GITHUB_ENV
+          echo "CODE_SMELLS=$CODE_SMELLS" >> $GITHUB_ENV
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+          echo "DUPLICATED_LINES=$DUPLICATED_LINES" >> $GITHUB_ENV
+
+      - name: Post Test and Quality Results
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## Checking if the code is healthy and with quality
+            
+            - [x] Automated Tests: `${{ steps.automated-tests.outcome }}`.
+            - [x] SonarQube Quality Gate: `${{ env.QUALITY_STATUS }}`.
+
+            ### SonarQube Report:
+
+            - **Bugs**: `${{ env.BUGS }}`
+            - **Vulnerabilities**: `${{ env.VULNERABILITIES }}`
+            - **Code Smells**: `${{ env.CODE_SMELLS }}`
+            - **Coverage**: `${{ env.COVERAGE }}%`
+            - **Duplicated Lines**: `${{ env.DUPLICATED_LINES }}%`
+
+            ### Test Result:
+
+            <details><summary>Show Results</summary>
+
+            *Test summary here*
+
+            </details>
+
+            ### Quality Gate:
+
+            *SonarQube quality gate status here: `${{ env.QUALITY_STATUS }}`*
+
+            *Pushed by: @${{ github.actor }}, Action: ${{ github.event_name }}*

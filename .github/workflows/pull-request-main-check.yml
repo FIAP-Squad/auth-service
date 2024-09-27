@@ -1,0 +1,110 @@
+name: (Health Check) main - Pull Request
+on:
+  pull_request_target:
+    types:
+      - reopened
+      - synchronize
+      
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'main'
+permissions:
+  pull-requests: write
+  contents: write
+env:
+  GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+  GITHUB_OWNER: ${{ vars.ACTIONS_GITHUB_OWNER }}
+jobs:
+  inform:
+    name: Information
+    runs-on: ubuntu-latest     
+    steps:
+      - name: Initialize pull request check
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## Pull Request Validation
+
+            ### :bulb: Initializing the check
+
+            #### All component files that have been committed will be validated
+            
+            *Wait for the jobs to run.*
+            *After running the jobs, the results will be displayed here below momentarily...*
+
+            *Pushed by: @${{ github.actor }}, Action: ${{ github.event_name }}*
+
+  check_code:
+    needs: inform
+    name: Code Review Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        id: install-dependencies
+        run: npm ci 
+
+      - name: Automated Tests
+        id: automated-tests
+        run:  |
+          echo "Running automated tests"
+          npm test
+
+      - name: SonarCloud Scan
+        id: sonar-quality-gate
+        uses: SonarSource/sonarcloud-github-action@v2.1.0
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:          
+          args: >
+            -Dsonar.projectKey=${{ vars.PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.exclusions=node_modules/**,src/main/**,src/core/**,src/domain/**,src/adapters/**,**\*.spec.ts,**\*.test.ts,
+            -Dsonar.typescript.tsconfigPath=tsconfig.json
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.verbose=true
+
+      - name: Post Test Failure
+        if: steps.automated-tests.outcome == 'failure'
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## Test failed
+
+            ### :worried: Something went wrong
+            
+            *Check the errors and failures below:*
+
+            ```
+            Detailed error information here...
+            ```
+
+      - name: Post Quality Failure
+        if: steps.sonar-qube-quality.outcome == 'failure'
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## Quality analysis failed
+
+            ### :worried: Quality check failed
+            
+            *Check the errors below:*
+
+            ```
+            Detailed error information here...
+            ```
+
