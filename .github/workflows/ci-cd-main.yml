@@ -11,7 +11,7 @@ permissions:
 
 env:
   GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
-  RELEASE_VERSION: v1.0.
+  RELEASE_VERSION: v1.0.0
   RELEASE_COUNTER: 1
 
 jobs:
@@ -54,4 +54,4 @@ jobs:
 
       - name: Deploy Application using Docker image
         run: |
-          docker run -d ${{ secrets.DOCKER_USERNAME }}/${{ env.REPO_NAME }}:latest
+          docker run -d --name auth-service ${{ secrets.DOCKER_USERNAME }}/${{ env.REPO_NAME }}:latest
