@@ -22,12 +22,16 @@ export type CognitoParams = {
   customAttributes?: Record<any, any>
 }
 
-export interface ICreateEntityGateway {
+export interface ISignUpGateway {
   signup: (user: CognitoParams) => Promise<AdminCreateUserCommandOutput>
 }
 
 export interface ISignInGateway {
   signin: ({ clientId, username, password }) => Promise<AuthenticationResult>
+}
+
+export interface IDeleteGateway {
+  delete: ({ username, userPoolId }) => Promise<void>
 }
 export interface IUpdateEntityPasswordGateway {
   updatePassword: ({ userPoolId, username, password }) => Promise<void>
@@ -37,7 +41,7 @@ export interface IRefreshTokenGateway {
   refreshToken: ({ refreshToken, clientId }) => Promise<AuthenticationResult>
 }
 
-export class IdentityGateway implements ICreateEntityGateway, IUpdateEntityPasswordGateway, IRefreshTokenGateway, ISignInGateway {
+export class IdentityGateway implements IDeleteGateway, ISignUpGateway, IUpdateEntityPasswordGateway, IRefreshTokenGateway, ISignInGateway {
   async delete ({ username, userPoolId }): Promise<void> {
     await identitySingleton.send(new AdminDeleteUserCommand({ Username: username, UserPoolId: userPoolId }))
   }

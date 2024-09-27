@@ -1,4 +1,4 @@
-import { type EventMapParams, type IEmitterGateway, type IEventMapDAO, type ICreateEntityGateway, type CognitoParams } from '@/infrastructure'
+import { type EventMapParams, type IEmitterGateway, type IEventMapDAO, type ISignUpGateway, type CognitoParams, type IUpdateEntityPasswordGateway, type IDeleteGateway } from '@/infrastructure'
 import { type AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider'
 import { CreateBusinessPartner } from '@/usecases'
 
@@ -54,13 +54,31 @@ const mockDAO = (): IEventMapDAO => {
   return new DAOStub()
 }
 
-const mockGateway = (): ICreateEntityGateway => {
-  class GatewayStub implements ICreateEntityGateway {
+const mockSignUpGateway = (): ISignUpGateway => {
+  class GatewayStub implements ISignUpGateway {
     async signup (user: CognitoParams): Promise<AdminCreateUserCommandOutput> {
       return await Promise.resolve(null)
     }
   }
   return new GatewayStub()
+}
+
+const mockUpdateGateway = (): IUpdateEntityPasswordGateway => {
+  class UpdateGatewayStub implements IUpdateEntityPasswordGateway {
+    async updatePassword ({ userPoolId, username, password }): Promise<void> {
+      return await Promise.resolve(null)
+    }
+  }
+  return new UpdateGatewayStub()
+}
+
+const mockDeleteGateway = (): IDeleteGateway => {
+  class DeleteGatewayStub implements IDeleteGateway {
+    async delete ({ userPoolId, username }): Promise<void> {
+      return await Promise.resolve(null)
+    }
+  }
+  return new DeleteGatewayStub()
 }
 
 const mockEmitter = (): IEmitterGateway => {
@@ -75,19 +93,25 @@ const mockEmitter = (): IEmitterGateway => {
 type SutTypes = {
   sut: CreateBusinessPartner
   DAOStub: IEventMapDAO
-  gatewayStub: ICreateEntityGateway
+  signupGatewayStub: ISignUpGateway
+  updateGatewayStub: IUpdateEntityPasswordGateway
+  deleteGatewayStub: IDeleteGateway
   emitterStub: IEmitterGateway
 }
 
 const mockSut = (): SutTypes => {
   const DAOStub = mockDAO()
-  const gatewayStub = mockGateway()
+  const signupGatewayStub = mockSignUpGateway()
+  const updateGatewayStub = mockUpdateGateway()
+  const deleteGatewayStub = mockDeleteGateway()
   const emitterStub = mockEmitter()
-  const sut = new CreateBusinessPartner(DAOStub, gatewayStub, emitterStub)
+  const sut = new CreateBusinessPartner(DAOStub, signupGatewayStub, updateGatewayStub, deleteGatewayStub, emitterStub)
   return {
     sut,
     DAOStub,
-    gatewayStub,
+    signupGatewayStub,
+    updateGatewayStub,
+    deleteGatewayStub,
     emitterStub
   }
 }
@@ -101,45 +125,71 @@ describe('Create Business Partner', () => {
   })
 
   test('Show call DAO with correct values', async () => {
-    const { sut, DAOStub, gatewayStub } = mockSut()
+    const { sut, DAOStub, signupGatewayStub } = mockSut()
     const { type } = mockUseCaseParams()
     const spy = jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(type)
   })
 
   test('Show throw if Gateway throw ', async () => {
-    const { sut, gatewayStub, DAOStub } = mockSut()
+    const { sut, signupGatewayStub, DAOStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.reject(new Error()))
+    jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.reject(new Error()))
     const promise = sut.execute(mockUseCaseParams())
     await expect(promise).rejects.toThrow()
   })
 
   test('Show call Gateway with correct values', async () => {
-    const { sut, gatewayStub, DAOStub } = mockSut()
+    const { sut, signupGatewayStub, DAOStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    const spy = jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    const spy = jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(mockGatewayParams())
   })
 
   test('Show throw if Emitter throw ', async () => {
-    const { sut, gatewayStub, DAOStub, emitterStub } = mockSut()
+    const { sut, signupGatewayStub, DAOStub, emitterStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     jest.spyOn(emitterStub, 'publish').mockReturnValueOnce(Promise.reject(new Error()))
     const promise = sut.execute(mockUseCaseParams())
     await expect(promise).rejects.toThrow()
   })
 
   test('Show call Emitter with correct values', async () => {
-    const { sut, gatewayStub, DAOStub, emitterStub } = mockSut()
+    const { sut, signupGatewayStub, DAOStub, emitterStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     const spy = jest.spyOn(emitterStub, 'publish')
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(mockQueueEvent())
+  })
+
+  test('Should update user with password if signup is successful', async () => {
+    const { sut, signupGatewayStub, DAOStub, updateGatewayStub } = mockSut()
+    jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
+    jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    const updateSpy = jest.spyOn(updateGatewayStub, 'updatePassword')
+    await sut.execute(mockUseCaseParams())
+    expect(updateSpy).toHaveBeenCalledWith({
+      userPoolId: mockEventParams().userPoolId,
+      username: mockUseCaseParams().email,
+      password: mockUseCaseParams().password
+    })
+  })
+
+  test('Should delete user if there is an error during password update', async () => {
+    const { sut, signupGatewayStub, DAOStub, updateGatewayStub, deleteGatewayStub } = mockSut()
+    jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
+    jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(updateGatewayStub, 'updatePassword').mockReturnValueOnce(Promise.reject(new Error('Password update failed')))
+    const deleteSpy = jest.spyOn(deleteGatewayStub, 'delete')
+    await sut.execute(mockUseCaseParams())
+    expect(deleteSpy).toHaveBeenCalledWith({
+      userPoolId: mockEventParams().userPoolId,
+      username: mockUseCaseParams().email
+    })
   })
 })

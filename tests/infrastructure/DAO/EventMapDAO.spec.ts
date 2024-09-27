@@ -20,7 +20,7 @@ describe('EventMapDAO', () => {
     await sut.load(type)
     expect(findFirstSpy).toHaveBeenCalledWith({
       where: { businessPartnerType: type },
-      select: { userPoolId: true, queue: true }
+      select: { userPoolId: true, queue: true, clientId: true }
     })
   })
   test('should return null if no record is found', async () => {
