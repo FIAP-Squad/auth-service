@@ -1,10 +1,10 @@
 name: (CI CD) - Push
 
-# on:
-#     workflow_run:
-#         workflows: ["(Health Check main) - Pull Request"]
-#         types:
-#             - completed
+on:
+    workflow_run:
+        workflows: ["(Health Check main) - Pull Request"]
+        types:
+            - completed
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
