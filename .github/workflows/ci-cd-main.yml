@@ -9,11 +9,6 @@ permissions:
   pull-requests: write
   contents: write
 
-env:
-  GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
-  RELEASE_VERSION: v1.0.0
-  RELEASE_COUNTER: 1
-
 jobs:
   build:
     name: Build - CI
@@ -31,15 +26,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract repository name
-        id: repo-name
-        run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
-          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
-
       - name: Pull Docker image from DockerHub
         run: |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.REPO_NAME }}:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
 
   deploy:
     needs: build
@@ -54,4 +43,4 @@ jobs:
 
       - name: Deploy Application using Docker image
         run: |
-          docker run -d --name auth-service ${{ secrets.DOCKER_USERNAME }}/${{ env.REPO_NAME }}:latest
+          docker run -d --name auth-service ${{ secrets.DOCKER_USERNAME }}/auth-service:latest
