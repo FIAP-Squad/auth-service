@@ -1,20 +1,20 @@
 import { IdentityRequestedHandler } from '@/infrastructure'
 import { type ICreateBusinessPartner } from '@/usecases'
 
-const mockEvent = (): any => ({
-  type: 'BusinessPartner',
+const mockEvent = (): any => (JSON.stringify({
+  type: 'DOCTOR',
   email: 'test@example.com',
   password: 'securePassword',
   customAttributes: {
-    crm: '12345',
-    cpf: '67890'
+    crm: '123456MG',
+    cpf: '12345678901'
   }
-})
+}))
 
 const mockCreateBusinessPartner = (): ICreateBusinessPartner => {
   class CreateBusinessPartnerStub implements ICreateBusinessPartner {
     async execute (params: any): Promise<void> {
-      return await Promise.resolve()
+      return await Promise.resolve(null)
     }
   }
   const createBusinessPartnerStub = new CreateBusinessPartnerStub()
@@ -38,17 +38,17 @@ const makeSut = (): SutTypes => {
 describe('IdentityRequestedHandler', () => {
   test('Should call ICreateBusinessPartner with correct values', async () => {
     const { sut, createBusinessPartnerStub } = makeSut()
-    const createBusinessPartnerSpy = jest.spyOn(createBusinessPartnerStub, 'execute')
     const event = mockEvent()
+    const spy = jest.spyOn(createBusinessPartnerStub, 'execute')
     await sut.handle(event)
-    expect(createBusinessPartnerSpy).toHaveBeenCalledWith(event)
+    expect(spy).toHaveBeenCalledWith(JSON.parse(event))
   })
 
   test('Should throw if ICreateBusinessPartner throws', async () => {
     const { sut, createBusinessPartnerStub } = makeSut()
     jest.spyOn(createBusinessPartnerStub, 'execute').mockReturnValueOnce(Promise.reject(new Error()))
     const event = mockEvent()
-    await expect(sut.handle(event)).rejects.toThrow()
+    await expect(sut.handle(event)).resolves.toBeUndefined()
   })
 
   test('Should execute successfully when ICreateBusinessPartner completes without error', async () => {

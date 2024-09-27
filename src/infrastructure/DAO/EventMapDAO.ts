@@ -11,7 +11,7 @@ export interface IEventMapDAO {
 
 export class EventMapDAO implements IEventMapDAO {
   async load (type: string): Promise<EventMapParams> {
-    return await prismaClient.identityProperties.findUnique({
+    return await prismaClient.identityProperties.findFirst({
       where: { businessPartnerType: type },
       select: { userPoolId: true, queue: true }
     })

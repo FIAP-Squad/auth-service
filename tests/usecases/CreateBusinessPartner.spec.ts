@@ -1,4 +1,4 @@
-import { type EventMapParams, type IEmitterGateway, type IEventMapDAO, type ICreateEntityGateway, type CognitoUser } from '@/infrastructure'
+import { type EventMapParams, type IEmitterGateway, type IEventMapDAO, type ICreateEntityGateway, type CognitoParams } from '@/infrastructure'
 import { type AdminCreateUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider'
 import { CreateBusinessPartner } from '@/usecases'
 
@@ -56,7 +56,7 @@ const mockDAO = (): IEventMapDAO => {
 
 const mockGateway = (): ICreateEntityGateway => {
   class GatewayStub implements ICreateEntityGateway {
-    async create (user: CognitoUser): Promise<AdminCreateUserCommandOutput> {
+    async signup (user: CognitoParams): Promise<AdminCreateUserCommandOutput> {
       return await Promise.resolve(null)
     }
   }
@@ -104,7 +104,7 @@ describe('Create Business Partner', () => {
     const { sut, DAOStub, gatewayStub } = mockSut()
     const { type } = mockUseCaseParams()
     const spy = jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(type)
   })
@@ -112,7 +112,7 @@ describe('Create Business Partner', () => {
   test('Show throw if Gateway throw ', async () => {
     const { sut, gatewayStub, DAOStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.reject(new Error()))
+    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.reject(new Error()))
     const promise = sut.execute(mockUseCaseParams())
     await expect(promise).rejects.toThrow()
   })
@@ -120,7 +120,7 @@ describe('Create Business Partner', () => {
   test('Show call Gateway with correct values', async () => {
     const { sut, gatewayStub, DAOStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    const spy = jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    const spy = jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(mockGatewayParams())
   })
@@ -128,7 +128,7 @@ describe('Create Business Partner', () => {
   test('Show throw if Emitter throw ', async () => {
     const { sut, gatewayStub, DAOStub, emitterStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     jest.spyOn(emitterStub, 'publish').mockReturnValueOnce(Promise.reject(new Error()))
     const promise = sut.execute(mockUseCaseParams())
     await expect(promise).rejects.toThrow()
@@ -137,7 +137,7 @@ describe('Create Business Partner', () => {
   test('Show call Emitter with correct values', async () => {
     const { sut, gatewayStub, DAOStub, emitterStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
-    jest.spyOn(gatewayStub, 'create').mockReturnValueOnce(Promise.resolve(mockIdentity()))
+    jest.spyOn(gatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
     const spy = jest.spyOn(emitterStub, 'publish')
     await sut.execute(mockUseCaseParams())
     expect(spy).toHaveBeenCalledWith(mockQueueEvent())

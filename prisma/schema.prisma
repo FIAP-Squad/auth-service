@@ -16,6 +16,7 @@ datasource db {
 model IdentityProperties {
     id                  String @id @default(uuid())
     businessPartnerType String @unique
+    clientId            String @unique
     userPoolId          String @unique
     queue               String @unique
 }

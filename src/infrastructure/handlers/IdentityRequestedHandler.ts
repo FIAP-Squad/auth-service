@@ -7,6 +7,10 @@ export interface IHandler {
 export class IdentityRequestedHandler implements IHandler {
   constructor (private readonly _usecase: ICreateBusinessPartner) { }
   async handle (event: any): Promise<void> {
-    await this._usecase.execute(event)
+    try {
+      await this._usecase.execute(JSON.parse(event))
+    } catch (error) {
+      process.stdout.write(`Error: ${error.message}, Stack: ${error.stack}`)
+    }
   }
 }

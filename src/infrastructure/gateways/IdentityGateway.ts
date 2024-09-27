@@ -14,7 +14,7 @@ export type AuthenticationResult = {
   RefreshToken?: string
 }
 
-export type CognitoUser = {
+export type CognitoParams = {
   userPoolId: string
   email: string
   username: string
@@ -23,9 +23,12 @@ export type CognitoUser = {
 }
 
 export interface ICreateEntityGateway {
-  create: (user: CognitoUser) => Promise<AdminCreateUserCommandOutput>
+  signup: (user: CognitoParams) => Promise<AdminCreateUserCommandOutput>
 }
 
+export interface ISignInGateway {
+  signin: ({ clientId, username, password }) => Promise<AuthenticationResult>
+}
 export interface IUpdateEntityPasswordGateway {
   updatePassword: ({ userPoolId, username, password }) => Promise<void>
 }
@@ -33,22 +36,19 @@ export interface IUpdateEntityPasswordGateway {
 export interface IRefreshTokenGateway {
   refreshToken: ({ refreshToken, clientId }) => Promise<AuthenticationResult>
 }
-export interface ISignInGateway {
-  signin: ({ clientId, username, password }) => Promise<AuthenticationResult>
-}
 
 export class IdentityGateway implements ICreateEntityGateway, IUpdateEntityPasswordGateway, IRefreshTokenGateway, ISignInGateway {
   async delete ({ username, userPoolId }): Promise<void> {
     await identitySingleton.send(new AdminDeleteUserCommand({ Username: username, UserPoolId: userPoolId }))
   }
 
-  async create ({
+  async signup ({
     userPoolId,
     email,
     username,
     password,
     customAttributes
-  }: CognitoUser): Promise<AdminCreateUserCommandOutput> {
+  }: CognitoParams): Promise<AdminCreateUserCommandOutput> {
     const userAttributes = [
       { Name: 'email_verified', Value: 'true' },
       { Name: 'email', Value: email }
