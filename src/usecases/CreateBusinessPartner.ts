@@ -29,6 +29,7 @@ export class CreateBusinessPartner implements ICreateBusinessPartner {
 
   async execute ({ type, email, password, customAttributes }: IdentityProperties): Promise<void> {
     const properties = await this._DAO.load(type)
+
     if (properties) {
       const { queue, userPoolId } = properties
       const { User } = await this._signup.signup({ userPoolId, username: email, email, password, customAttributes })
@@ -37,10 +38,7 @@ export class CreateBusinessPartner implements ICreateBusinessPartner {
           await this._update.updatePassword({ userPoolId, username: email, password })
         } catch (error) {
           await this._delete.delete({ userPoolId, username: email })
-          await this._emitter.publish({
-            queue: `${queue}-error`,
-            message: error
-          })
+          await this._emitter.publish({ queue: `${queue}-error`, message: error })
         }
         await this._emitter.publish({
           queue,

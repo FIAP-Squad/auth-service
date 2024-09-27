@@ -1,0 +1,46 @@
+name: (Post-PR Approval) - Build and Push Docker Image
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - qa
+
+env:
+  IMAGE_NAME: auth-service
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest .
+
+      - name: Tag Docker image with version
+        run: |
+          VERSION=$(date +'%Y%m%d%H%M%S')
+          docker tag ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${VERSION}
+
+      - name: Push Docker image to DockerHub (latest)
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:latest
+
+      - name: Push Docker image to DockerHub (versioned)
+        run: |
+          VERSION=$(date +'%Y%m%d%H%M%S')
+          docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${VERSION}
