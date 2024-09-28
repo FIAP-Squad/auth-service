@@ -41,6 +41,13 @@ export class Presenter {
     }
   }
 
+  static unauthorized (): IHTTPResponse {
+    return {
+      statusCode: 401,
+      body: null
+    }
+  }
+
   static serverError (error: Error): IHTTPResponse {
     return {
       statusCode: 500,
