@@ -1,38 +1,64 @@
-name: 🚀 Create Release
-
 on:
   pull_request:
+    types: [closed]
     branches:
       - main
-    types:
-      - closed
+
+name: 🚀 Create Release Pipeline
 
 jobs:
-  create-release:
-    if: ${{ github.event.pull_request.merged == true }}
+  build:
+    if: github.event.pull_request.merged == true  # Somente se o PR foi mergeado
+    name: 🛠️ Build and Release
     runs-on: ubuntu-latest
+
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
+      - name: 📂 Checkout code
+        uses: actions/checkout@v2
 
-      - name: 📝 Generate Changelog
-        id: changelog
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🏗️ Build project
+        run: npm run build
+
+      - name: 🏷️ Get tag name
+        id: get_tag
+        run: echo "::set-output name=tag_name::${GITHUB_REF##*/}"
+
+      - name: 📦 Zip the dist folder
         run: |
-          git log $(git describe --tags --abbrev=0)..HEAD --oneline > changelog.txt
+          cd dist
+          zip -r ../${{ steps.get_tag.outputs.tag_name }}.zip .
+        working-directory: .
 
-      - name: 🏷️ Create Release
+      - name: 📢 Create GitHub Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.sha }}
-          release_name: "Release ${{ github.sha }}"
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
+          release_name: "Release ${{ steps.get_tag.outputs.tag_name }}"
           body: |
-            ### 📋 Changelog:
-            ${{ steps.changelog.outputs.changelog }}
+            Changes in this Release:
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: false
 
-      - name: 📦 Upload Changelog as an Artifact
-        uses: actions/upload-artifact@v3
+      # Upload release asset
+      - name: 📤 Upload Release Asset
+        uses: actions/upload-release-asset@v1
         with:
-          name: changelog
-          path: changelog.txt
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_tag.outputs.tag_name }}.zip
+          asset_name: ${{ steps.get_tag.outputs.tag_name }}.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
