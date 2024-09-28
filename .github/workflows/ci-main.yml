@@ -1,8 +1,8 @@
-name: (CI) - Push
+name: (CI) - Main
 
 on:
     workflow_run:
-        workflows: ["(Health Check main) - Pull Request"]
+        workflows: ["(Health Check main)"]
         types:
             - completed
 jobs:
