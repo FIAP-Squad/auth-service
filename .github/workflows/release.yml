@@ -24,6 +24,21 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install
 
+      # Pega o nome e email do usuário que abriu o PR
+      - name: 🔍 Get PR Author Info
+        id: get_pr_author
+        run: |
+          echo "::set-output name=username::$(jq -r '.pull_request.user.login' < ${GITHUB_EVENT_PATH})"
+          echo "::set-output name=useremail::$(curl -s https://api.github.com/users/$(jq -r '.pull_request.user.login' < ${GITHUB_EVENT_PATH}) | jq -r '.email')"
+
+      # Configura o Git com o nome e e-mail do autor do PR
+      - name: ⚙️ Configure Git with PR author details
+        run: |
+          git config --local user.name "${{ steps.get_pr_author.outputs.username }}"
+          git config --local user.email "${{ steps.get_pr_author.outputs.useremail }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: 📝 Generate Changelog
         run: npm run changelog:generate
 
