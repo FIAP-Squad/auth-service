@@ -19,7 +19,7 @@ export class SignIn implements ISignIn {
   async execute ({ email, password, type }: SignInParams): Promise<AuthenticationResult> {
     const identityProperties = await this._DAO.load(type)
     if (identityProperties?.clientId) {
-      const token = await this._gateway.signin({ clientId: identityProperties, username: email, password })
+      const token = await this._gateway.signin({ clientId: identityProperties.clientId, username: email, password })
       return token
     }
     return null
