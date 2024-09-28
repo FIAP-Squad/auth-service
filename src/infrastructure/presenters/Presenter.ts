@@ -1,7 +1,8 @@
 import {
   ServerError,
   NotFound,
-  type IHTTPResponse
+  type IHTTPResponse,
+  Unauthorized
 } from '@/infrastructure'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -44,7 +45,7 @@ export class Presenter {
   static unauthorized (): IHTTPResponse {
     return {
       statusCode: 401,
-      body: null
+      body: new Unauthorized()
     }
   }
 
