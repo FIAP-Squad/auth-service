@@ -1,62 +1,84 @@
-name: (Health Check main) - Pull Request
+name: 🛡️ (Code Health Check - Main)
 
 on:
   pull_request_target:
     types:
       - reopened
       - synchronize
-      
   pull_request:
     types:
       - opened
     branches:
       - 'main'
+
 permissions:
   pull-requests: write
   contents: write
+
 env:
   GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+
 jobs:
   inform:
-    name: Information
-    runs-on: ubuntu-latest     
+    name: 🚀 Initializing Code Health Check
+    runs-on: ubuntu-latest
     steps:
-      - name: Initialize pull request check
+      - name: 📢 Start PR Validation
         uses: mshick/add-pr-comment@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]'
           message: |
-            ## Pull Request Validation
-
-            ### :bulb: Initializing the check
-
-            #### All component files that have been committed will be validated
+            ## 🚦 Pull Request Validation Initialized
+            🔍 Validating committed files.
             
-            *Wait for the jobs to run.*
-            *After running the jobs, the results will be displayed here below momentarily...*
+            🛠️ **Jobs Running** - *Please wait for the results below...*
 
-            *Pushed by: @${{ github.actor }}, Action: ${{ github.event_name }}*
+            🚀 **Triggered by**: @${{ github.actor }}, via *${{ github.event_name }}*
 
-  check_code:
+  security_check:
     needs: inform
-    name: Code Review Validation
+    name: 🔐 Security Checks
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: 🔎 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        id: install-dependencies
-        run: npm ci 
+      - name: ⚙️ Run security audit
+        id: security-audit
+        run: npm audit --audit-level=high
 
-      - name: Automated Tests
+      - name: 🛡️ Post Security Audit Failure
+        if: steps.security-audit.outcome == 'failure'
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## ⚠️ Security Audit Failed!
+            🚨 High or critical vulnerabilities were found.
+            
+            Please review the audit results and fix the issues:
+            ```
+            npm audit results...
+            ```
+
+  quality_check:
+    needs: security_check
+    name: ✅ Code Quality and Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛠️ Checkout repository
+        uses: actions/checkout@v3
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run Automated Tests
         id: automated-tests
-        run:  |
-          echo "Running automated tests"
-          npm test
+        run: npm test
 
-      - name: SonarCloud Scan
+      - name: 🛠️ SonarCloud Quality Gate
         id: sonar-quality-gate
         uses: SonarSource/sonarcloud-github-action@v2.1.0
         env:
@@ -74,37 +96,44 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.verbose=true
 
-      - name: Post Test Failure
+      - name: 🚨 Post Test Failure
         if: steps.automated-tests.outcome == 'failure'
         uses: mshick/add-pr-comment@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]'
           message: |
-            ## Test failed
-
-            ### :worried: Something went wrong
+            ## ❌ Test Failure!
+            ### 🚨 Tests failed in the PR validation process.
             
-            *Check the errors and failures below:*
-
+            Review the errors below:
             ```
-            Detailed error information here...
+            Test error details here...
             ```
 
-      - name: Post Quality Failure
-        if: steps.sonar-qube-quality.outcome == 'failure'
+      - name: 🚨 Post Quality Gate Failure
+        if: steps.sonar-quality-gate.outcome == 'failure'
         uses: mshick/add-pr-comment@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]'
           message: |
-            ## Quality analysis failed
-
-            ### :worried: Quality check failed
+            ## ❌ SonarCloud Quality Gate Failed!
+            ### 🚨 Code Quality Analysis Failed!
             
-            *Check the errors below:*
-
+            Review the issues identified:
             ```
-            Detailed error information here...
+            SonarCloud quality details here...
             ```
 
+      - name: 🟢 All Tests Passed!
+        if: success()
+        uses: mshick/add-pr-comment@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]'
+          message: |
+            ## 🎉 Code Validation Successful!
+            ### ✅ All tests and quality checks have passed.
+            
+            You can merge this pull request safely! 🚀

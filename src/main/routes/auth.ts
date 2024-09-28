@@ -1,15 +1,7 @@
-// import { type Router } from 'express'
-// import { adaptRoute } from '@/main/adapters'
-// import {
-//   makeAddOrderController,
-//   makeLoadOrdersController,
-//   makeUpdateOrderController
-// } from '@/main/factories/controllers'
+import { type Router } from 'express'
+import { adaptRoute } from '@/main/adapters'
+import { makeSignInController } from '@/main/factories/controllers'
 
-// export const auth = (router: Router): void => {
-//   router.post('/auth/refresh-token', adaptRoute(makeAddOrderController()))
-//   router.get('/auth/signup', adaptRoute(makeLoadOrdersController()))
-//   router.patch('/auth/signin/', adaptRoute(makeUpdateOrderController()))
-// }
-
-export const auth = (router: any): any => { }
+export const auth = (router: Router): void => {
+  router.post('/auth/signin', adaptRoute(makeSignInController()))
+}
