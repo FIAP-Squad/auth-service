@@ -7,18 +7,19 @@ import {
 
 } from '@/infrastructure'
 
-export interface ICreateBusinessPartner {
-  execute: (params: IdentityProperties) => Promise<void>
+export interface ISignUp {
+  execute: (params: SignUpParams) => Promise<void>
 }
 
-export type IdentityProperties = {
+export type SignUpParams = {
   type: string
   email: string
+  name: string
   password: string
   customAttributes?: Record<any, any>
 }
 
-export class CreateBusinessPartner implements ICreateBusinessPartner {
+export class SignUp implements ISignUp {
   constructor (
     private readonly _DAO: IEventMapDAO,
     private readonly _signup: ISignUpGateway,
@@ -27,7 +28,7 @@ export class CreateBusinessPartner implements ICreateBusinessPartner {
     private readonly _emitter: IEmitterGateway
   ) { }
 
-  async execute ({ type, email, password, customAttributes }: IdentityProperties): Promise<void> {
+  async execute ({ type, email, name, password, customAttributes }: SignUpParams): Promise<void> {
     const properties = await this._DAO.load(type)
 
     if (properties) {
@@ -46,6 +47,7 @@ export class CreateBusinessPartner implements ICreateBusinessPartner {
             type,
             properties: {
               email,
+              name,
               customAttributes
             }
           }
