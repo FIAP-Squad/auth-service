@@ -1,4 +1,4 @@
-name: Create Release
+name: 🚀 Create Release
 
 on:
   pull_request:
@@ -12,26 +12,26 @@ jobs:
     if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate Changelog
+      - name: 📝 Generate Changelog
         id: changelog
         run: |
           git log $(git describe --tags --abbrev=0)..HEAD --oneline > changelog.txt
 
-      - name: Create Release
+      - name: 🏷️ Create Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.sha }}  # Usa o SHA do commit para o release
-          release_name: Release ${{ github.sha }}  # Nome do release
+          tag_name: ${{ github.sha }}
+          release_name: "Release ${{ github.sha }}"
           body: |
-            ### Changelog:
+            ### 📋 Changelog:
             ${{ steps.changelog.outputs.changelog }}
 
-      - name: Upload Changelog as an Artifact
+      - name: 📦 Upload Changelog as an Artifact
         uses: actions/upload-artifact@v3
         with:
           name: changelog
