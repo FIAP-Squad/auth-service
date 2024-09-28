@@ -128,7 +128,7 @@ jobs:
             
             ### ✅ Automated Tests: `${{ steps.automated-tests.outcome }}`.
             ### ✅ SonarQube Quality Gate: `${{ env.QUALITY_STATUS }}`.
-
+ 
             ### SonarQube Report:
 
             - 🐞 **Reliability Rating**: `${{ env.RELIABILITY }}`
