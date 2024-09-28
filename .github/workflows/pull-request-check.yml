@@ -107,18 +107,16 @@ jobs:
         id: parse-sonar-results
         run: |
           QUALITY_STATUS=$(cat sonar-report.json | jq -r '.projectStatus.status')
-          BUGS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="bugs").actualValue // "N/A"')
-          VULNERABILITIES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="vulnerabilities").actualValue // "N/A"')
-          CODE_SMELLS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="code_smells").actualValue // "N/A"')
-          COVERAGE=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="coverage").actualValue // "N/A"')
-          DUPLICATED_LINES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="duplicated_lines_density").actualValue // "N/A"')
+          RELIABILITY=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_reliability_rating").actualValue')
+          SECURITY=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_security_rating").actualValue')
+          MAINTAINABILITY=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_maintainability_rating").actualValue')
+          SECURITY_HOTSPOTS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_security_hotspots_reviewed").actualValue')
 
           echo "QUALITY_STATUS=$QUALITY_STATUS" >> $GITHUB_ENV
-          echo "BUGS=$BUGS" >> $GITHUB_ENV
-          echo "VULNERABILITIES=$VULNERABILITIES" >> $GITHUB_ENV
-          echo "CODE_SMELLS=$CODE_SMELLS" >> $GITHUB_ENV
-          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
-          echo "DUPLICATED_LINES=$DUPLICATED_LINES" >> $GITHUB_ENV
+          echo "RELIABILITY=$RELIABILITY" >> $GITHUB_ENV
+          echo "SECURITY=$SECURITY" >> $GITHUB_ENV
+          echo "MAINTAINABILITY=$MAINTAINABILITY" >> $GITHUB_ENV
+          echo "SECURITY_HOTSPOTS=$SECURITY_HOTSPOTS" >> $GITHUB_ENV
 
       - name: 📋 Post Test and Quality Results
         uses: mshick/add-pr-comment@v1
@@ -133,12 +131,11 @@ jobs:
 
             ### SonarQube Report:
 
-            - 🐞 **Bugs**: `${{ env.BUGS }}`
-            - 🔐 **Vulnerabilities**: `${{ env.VULNERABILITIES }}`
-            - 💨 **Code Smells**: `${{ env.CODE_SMELLS }}`
-            - 📊 **Coverage**: `${{ env.COVERAGE }}%`
-            - 🧬 **Duplicated Lines**: `${{ env.DUPLICATED_LINES }}%`
-
+            - 🐞 **Reliability Rating**: `${{ env.RELIABILITY }}`
+            - 🔐 **Security Rating**: `${{ env.SECURITY }}`
+            - ⚙️ **Maintainability Rating**: `${{ env.MAINTAINABILITY }}`
+            - 🔎 **Security Hotspots Reviewed**: `${{ env.SECURITY_HOTSPOTS }}%`
+            
             ### Test Results:
 
             <details><summary>Show Test Results</summary>
