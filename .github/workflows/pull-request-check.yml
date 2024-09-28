@@ -100,17 +100,18 @@ jobs:
         id: sonar-results
         run: |
           curl -u ${{ secrets.SONAR_TOKEN }} "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ vars.PROJECT_KEY }}" > sonar-report.json
+          cat sonar-report.json # Exibe o relatório para validação
         continue-on-error: true
 
       - name: 📊 Parse SonarQube Results
         id: parse-sonar-results
         run: |
           QUALITY_STATUS=$(cat sonar-report.json | jq -r '.projectStatus.status')
-          BUGS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="bugs").actualValue')
-          VULNERABILITIES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="vulnerabilities").actualValue')
-          CODE_SMELLS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="code_smells").actualValue')
-          COVERAGE=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="coverage").actualValue')
-          DUPLICATED_LINES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="duplicated_lines_density").actualValue')
+          BUGS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="bugs").actualValue // "N/A"')
+          VULNERABILITIES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="vulnerabilities").actualValue // "N/A"')
+          CODE_SMELLS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="code_smells").actualValue // "N/A"')
+          COVERAGE=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="coverage").actualValue // "N/A"')
+          DUPLICATED_LINES=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="duplicated_lines_density").actualValue // "N/A"')
 
           echo "QUALITY_STATUS=$QUALITY_STATUS" >> $GITHUB_ENV
           echo "BUGS=$BUGS" >> $GITHUB_ENV
