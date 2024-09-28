@@ -135,12 +135,6 @@ jobs:
             - 🔐 **Security Rating**: `${{ env.SECURITY }}`
             - ⚙️ **Maintainability Rating**: `${{ env.MAINTAINABILITY }}`
             - 🔎 **Security Hotspots Reviewed**: `${{ env.SECURITY_HOTSPOTS }}%`
-            
-            ### Test Results:
-
-            <details><summary>Show Test Results</summary>
-            Test summary here...
-            </details>
 
             ### Quality Gate Status:
 
