@@ -1,5 +1,5 @@
 export * from './controllers'
-export * from './DAO'
+export * from './DAOs'
 export * from './errors'
 export * from './gateways'
 export * from './helpers'
