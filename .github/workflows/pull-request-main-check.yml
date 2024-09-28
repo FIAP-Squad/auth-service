@@ -1,10 +1,6 @@
 name: 🛡️ (Code Health Check - Main)
 
 on:
-  pull_request_target:
-    types:
-      - reopened
-      - synchronize
   pull_request:
     types:
       - opened
@@ -96,6 +92,28 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.verbose=true
 
+      - name: 🔎 Fetch SonarQube Results
+        id: sonar-results
+        run: |
+          curl -u ${{ secrets.SONAR_TOKEN }} "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ vars.PROJECT_KEY }}" > sonar-report.json
+          cat sonar-report.json # Exibe o relatório para validação
+        continue-on-error: true
+
+      - name: 📊 Parse SonarQube Results
+        id: parse-sonar-results
+        run: |
+          QUALITY_STATUS=$(cat sonar-report.json | jq -r '.projectStatus.status')
+          RELIABILITY=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_reliability_rating").actualValue')
+          SECURITY=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_security_rating").actualValue')
+          MAINTAINABILITY=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_maintainability_rating").actualValue')
+          SECURITY_HOTSPOTS=$(cat sonar-report.json | jq -r '.projectStatus.conditions[] | select(.metricKey=="new_security_hotspots_reviewed").actualValue')
+
+          echo "QUALITY_STATUS=$QUALITY_STATUS" >> $GITHUB_ENV
+          echo "RELIABILITY=$RELIABILITY" >> $GITHUB_ENV
+          echo "SECURITY=$SECURITY" >> $GITHUB_ENV
+          echo "MAINTAINABILITY=$MAINTAINABILITY" >> $GITHUB_ENV
+          echo "SECURITY_HOTSPOTS=$SECURITY_HOTSPOTS" >> $GITHUB_ENV
+
       - name: 🚨 Post Test Failure
         if: steps.automated-tests.outcome == 'failure'
         uses: mshick/add-pr-comment@v1
@@ -112,7 +130,7 @@ jobs:
             ```
 
       - name: 🚨 Post Quality Gate Failure
-        if: steps.sonar-quality-gate.outcome == 'failure'
+        if: steps.sonar-quality-gate.outcome == 'failure' || env.QUALITY_STATUS != 'OK'
         uses: mshick/add-pr-comment@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -120,14 +138,19 @@ jobs:
           message: |
             ## ❌ SonarCloud Quality Gate Failed!
             ### 🚨 Code Quality Analysis Failed!
+
+            **SonarQube Quality Gate Status**: `${{ env.QUALITY_STATUS }}`
             
             Review the issues identified:
-            ```
-            SonarCloud quality details here...
-            ```
+            - 🐞 **Reliability Rating**: `${{ env.RELIABILITY }}`
+            - 🔐 **Security Rating**: `${{ env.SECURITY }}`
+            - ⚙️ **Maintainability Rating**: `${{ env.MAINTAINABILITY }}`
+            - 🔎 **Security Hotspots Reviewed**: `${{ env.SECURITY_HOTSPOTS }}%`
+            
+            Take necessary actions to resolve the above issues.
 
       - name: 🟢 All Tests Passed!
-        if: success()
+        if: success() && env.QUALITY_STATUS == 'OK'
         uses: mshick/add-pr-comment@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -137,3 +160,9 @@ jobs:
             ### ✅ All tests and quality checks have passed.
             
             You can merge this pull request safely! 🚀
+            
+            **SonarQube Quality Gate Status**: `${{ env.QUALITY_STATUS }}`
+            - 🐞 **Reliability Rating**: `${{ env.RELIABILITY }}`
+            - 🔐 **Security Rating**: `${{ env.SECURITY }}`
+            - ⚙️ **Maintainability Rating**: `${{ env.MAINTAINABILITY }}`
+            - 🔎 **Security Hotspots Reviewed**: `${{ env.SECURITY_HOTSPOTS }}%`
