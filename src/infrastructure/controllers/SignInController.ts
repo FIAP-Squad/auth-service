@@ -14,6 +14,7 @@ export class SignInController implements IController {
       const token = await this._usecase.execute(body)
       return Presenter.ok(token)
     } catch (error) {
+      if (error?.name === 'NotAuthorizedException') return Presenter.unauthorized()
       return Presenter.serverError(error)
     }
   }

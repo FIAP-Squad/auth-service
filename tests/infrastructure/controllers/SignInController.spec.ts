@@ -70,6 +70,16 @@ describe('SignInController', () => {
     expect(response).toEqual(Presenter.badRequest(new Error('Validation error')))
   })
 
+  test('Should return unauthorized if usecase returns not authorized error', async () => {
+    const { sut, signInStub } = makeSut()
+    const error = new Error()
+    error.name = 'NotAuthorizedException'
+    jest.spyOn(signInStub, 'execute').mockReturnValueOnce(Promise.reject(error))
+    const request = mockRequest()
+    const response = await sut.handle(request)
+    expect(response).toEqual(Presenter.unauthorized())
+  })
+
   test('Should return 200 if SignIn succeeds', async () => {
     const { sut, signInStub } = makeSut()
     const request = mockRequest()
