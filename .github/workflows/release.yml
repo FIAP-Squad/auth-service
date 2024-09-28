@@ -24,6 +24,9 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install
 
+      - name: 📝 Generate Changelog
+        run: npm run changelog
+
       - name: 🏗️ Build project
         run: npm run build
 
