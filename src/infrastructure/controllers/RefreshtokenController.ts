@@ -1,18 +1,18 @@
 import { type IHTTPResponse, type IController, type IValidation, type IHTTPRequest, Presenter } from '@/infrastructure'
-import { type ISignIn } from '@/usecases'
+import { type IRefreshToken } from '@/usecases'
 
-export class SignInController implements IController {
+export class RefreshTokenController implements IController {
   constructor (
     private readonly _validation: IValidation,
-    private readonly _usecase: ISignIn
+    private readonly _usecase: IRefreshToken
   ) { }
 
   async handle ({ body }: IHTTPRequest): Promise<IHTTPResponse> {
     try {
       const error = this._validation.validate(body)
       if (error) return Presenter.badRequest(error)
-      const { email, password, type } = body
-      const token = await this._usecase.execute({ email, password, type })
+      const { refreshToken, type } = body
+      const token = await this._usecase.execute({ refreshToken, type })
       return Presenter.ok(token)
     } catch (error) {
       if (error?.name === 'NotAuthorizedException') return Presenter.unauthorized()
