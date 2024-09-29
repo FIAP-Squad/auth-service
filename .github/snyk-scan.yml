@@ -43,5 +43,6 @@ jobs:
           path: snyk-report.html
 
       - name: 🚨 Fail if Vulnerabilities are Found
-        if: failure()  # Só falha se vulnerabilidades forem encontradas
+        if: failure()
         run: echo "❌ Vulnerabilities found! Check the report."
+
