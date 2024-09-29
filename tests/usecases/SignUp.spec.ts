@@ -147,7 +147,7 @@ describe('Create Business Partner', () => {
     expect(spy).toHaveBeenCalledWith(mockGatewayParams())
   })
 
-  test('Show throw if Emitter throw ', async () => {
+  test('Show throw if Emitter throw', async () => {
     const { sut, signupGatewayStub, DAOStub, emitterStub } = mockSut()
     jest.spyOn(DAOStub, 'load').mockReturnValueOnce(Promise.resolve(mockEventParams()))
     jest.spyOn(signupGatewayStub, 'signup').mockReturnValueOnce(Promise.resolve(mockIdentity()))
