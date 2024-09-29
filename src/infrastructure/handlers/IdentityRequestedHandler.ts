@@ -1,11 +1,11 @@
-import { type ICreateBusinessPartner } from '@/usecases'
+import { type ISignUp } from '@/usecases'
 
 export interface IHandler {
   handle: (event: any) => Promise<void>
 }
 
 export class IdentityRequestedHandler implements IHandler {
-  constructor (private readonly _usecase: ICreateBusinessPartner) { }
+  constructor (private readonly _usecase: ISignUp) { }
   async handle (event: any): Promise<void> {
     try {
       await this._usecase.execute(JSON.parse(event))

@@ -1,5 +1,5 @@
 import { IdentityRequestedHandler } from '@/infrastructure'
-import { type ICreateBusinessPartner } from '@/usecases'
+import { type ISignUp } from '@/usecases'
 
 const mockEvent = (): any => (JSON.stringify({
   type: 'DOCTOR',
@@ -11,8 +11,8 @@ const mockEvent = (): any => (JSON.stringify({
   }
 }))
 
-const mockCreateBusinessPartner = (): ICreateBusinessPartner => {
-  class CreateBusinessPartnerStub implements ICreateBusinessPartner {
+const mockCreateBusinessPartner = (): ISignUp => {
+  class CreateBusinessPartnerStub implements ISignUp {
     async execute (params: any): Promise<void> {
       return await Promise.resolve(null)
     }
@@ -23,7 +23,7 @@ const mockCreateBusinessPartner = (): ICreateBusinessPartner => {
 
 interface SutTypes {
   sut: IdentityRequestedHandler
-  createBusinessPartnerStub: ICreateBusinessPartner
+  createBusinessPartnerStub: ISignUp
 }
 
 const makeSut = (): SutTypes => {
@@ -36,7 +36,7 @@ const makeSut = (): SutTypes => {
 }
 
 describe('IdentityRequestedHandler', () => {
-  test('Should call ICreateBusinessPartner with correct values', async () => {
+  test('Should call ISignUp with correct values', async () => {
     const { sut, createBusinessPartnerStub } = makeSut()
     const event = mockEvent()
     const spy = jest.spyOn(createBusinessPartnerStub, 'execute')
@@ -44,14 +44,14 @@ describe('IdentityRequestedHandler', () => {
     expect(spy).toHaveBeenCalledWith(JSON.parse(event))
   })
 
-  test('Should throw if ICreateBusinessPartner throws', async () => {
+  test('Should throw if ISignUp throws', async () => {
     const { sut, createBusinessPartnerStub } = makeSut()
     jest.spyOn(createBusinessPartnerStub, 'execute').mockReturnValueOnce(Promise.reject(new Error()))
     const event = mockEvent()
     await expect(sut.handle(event)).resolves.toBeUndefined()
   })
 
-  test('Should execute successfully when ICreateBusinessPartner completes without error', async () => {
+  test('Should execute successfully when ISignUp completes without error', async () => {
     const { sut } = makeSut()
     const event = mockEvent()
     await expect(sut.handle(event)).resolves.not.toThrow()
