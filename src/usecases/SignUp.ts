@@ -45,11 +45,9 @@ export class SignUp implements ISignUp {
           queue,
           message: {
             type,
-            properties: {
-              email,
-              name,
-              customAttributes
-            }
+            email,
+            name,
+            ...customAttributes
           }
         })
       }

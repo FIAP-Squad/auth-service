@@ -36,14 +36,10 @@ const mockQueueEvent = (): any => ({
   queue: mockEventParams().queue,
   message: {
     type: mockUseCaseParams().type,
-    properties: {
-      email: mockUseCaseParams().email,
-      name: mockUseCaseParams().name,
-      customAttributes: {
-        cpf: mockUseCaseParams().customAttributes.cpf,
-        crm: mockUseCaseParams().customAttributes.crm
-      }
-    }
+    email: mockUseCaseParams().email,
+    name: mockUseCaseParams().name,
+    cpf: mockUseCaseParams().customAttributes.cpf,
+    crm: mockUseCaseParams().customAttributes.crm
   }
 })
 
