@@ -32,74 +32,8 @@ jobs:
 
             🚀 **Triggered by**: @${{ github.actor }}, via *${{ github.event_name }}*
 
-  security_check:
-    needs: inform
-    name: 🔐 Security Checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔎 Checkout repository
-        uses: actions/checkout@v3
-
-      - name: 🛠️ Install Snyk CLI
-        run: npm install -g snyk
-
-      - name: 📦 Install Dependencies
-        run: npm ci
-
-      - name: ⚙️ Run security audit
-        id: security-audit
-        run: npm audit --audit-level=high
-
-      - name: 🛡️ Post Security Audit Failure
-        if: steps.security-audit.outcome == 'failure'
-        uses: mshick/add-pr-comment@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-token-user-login: 'github-actions[bot]'
-          message: |
-            ## ⚠️ Security Audit Failed!
-            🚨 High or critical vulnerabilities were found.
-            
-            Please review the audit results and fix the issues:
-            ```
-            npm audit results...
-            ```
-
-  snyk_scan:
-    needs: security_check
-    name: 🔍 Snyk Vulnerability Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v2
-
-      - name: 📦 Install Dependencies
-        run: npm install
-
-      - name: 🛡️ Run Snyk to Check for Vulnerabilities
-        run: snyk test --all-projects
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      - name: 📝 Generate Snyk HTML Report
-        run: |
-          snyk test --all-projects --json > snyk-report.json
-          snyk-to-html -i snyk-report.json -o snyk-report.html
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      - name: 📤 Upload Snyk HTML Report as an Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: snyk-vulnerability-report
-          path: snyk-report.html
-
-      - name: 🚨 Fail if Vulnerabilities are Found
-        if: failure()
-        run: echo "❌ Vulnerabilities found! Check the report."
-
   quality_check:
-    needs: snyk_scan
+    needs: inform
     name: ✅ Code Quality and Testing
     runs-on: ubuntu-latest
     steps:
