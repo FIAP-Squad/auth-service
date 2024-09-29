@@ -45,4 +45,3 @@ jobs:
       - name: 🚨 Fail if Vulnerabilities are Found
         if: failure()
         run: echo "❌ Vulnerabilities found! Check the report."
-
