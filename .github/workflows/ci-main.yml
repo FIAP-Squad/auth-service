@@ -2,9 +2,9 @@ name: 🛠️ (CI) - Main
 
 on:
   workflow_run:
-      workflows: ["(Health Check main)"]
-      types:
-          - completed
+    workflows: ["(Health Check main)"]
+    types:
+      - completed
 
 jobs:
   build-and-push:
@@ -29,7 +29,9 @@ jobs:
           context: .
           file: ./Dockerfile.prd
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/auth-service:latest
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/auth-service:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/auth-service:${{ github.sha }}
 
       - name: 🔒 Logout from Docker Hub
         run: docker logout
