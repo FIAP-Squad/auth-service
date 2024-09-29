@@ -2,7 +2,7 @@ name: 🛠️ (CI) - Main
 
 on:
   workflow_run:
-    workflows: ["(Health Check main)"]
+    workflows: ["(Code Health Check - Main)"]
     types:
       - completed
 
