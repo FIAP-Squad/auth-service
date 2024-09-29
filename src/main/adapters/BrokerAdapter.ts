@@ -1,11 +1,11 @@
 import amqp, { type Channel, type Connection } from 'amqplib'
 import env from '@/main/config/env'
-import { type IHandler } from '@/infrastructure'
+import { type Handler } from '@/infrastructure'
 
 export interface IBrokerAdapter {
   connect: () => Promise<void>
   disconnect: () => Promise<void>
-  subscribe: (queue: string, handle: IHandler) => Promise<void>
+  subscribe: (queue: string, handle: Handler) => Promise<void>
   publish: ({ queue, message }) => Promise<void>
   run: () => Promise<void>
 }
@@ -18,7 +18,7 @@ export class BrokerClient implements IBrokerAdapter {
   private readonly _PORT: number = Number.parseInt(env.RABBITMQ.PORT)
   private readonly _USERNAME: string = env.RABBITMQ.USERNAME
   private readonly _PASSWORD: string = env.RABBITMQ.PASSWORD
-  private readonly handlers: Map<string, IHandler> = new Map<string, IHandler>()
+  private readonly handlers: Map<string, Handler> = new Map<string, Handler>()
 
   async connect (): Promise<void> {
     this.connection = await amqp.connect({
@@ -36,15 +36,15 @@ export class BrokerClient implements IBrokerAdapter {
     await this.connection.close()
   }
 
-  async subscribe (queue: string, handler: IHandler): Promise<void> {
+  async subscribe (queue: string, handler: Handler): Promise<void> {
     await this.channel.assertQueue(queue, { durable: true })
     this.handlers.set(queue, handler)
   }
 
   async publish ({ queue, message }): Promise<void> {
     await this.channel.assertQueue(queue, { durable: true })
-    const messageContent = message.content.toString()
-    this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)))
+    const messageContent = JSON.stringify(message)
+    this.channel.sendToQueue(queue, Buffer.from(messageContent))
     console.log(`Message sended through queue: ${queue}: ${messageContent}`)
   }
 
@@ -54,7 +54,8 @@ export class BrokerClient implements IBrokerAdapter {
         if (message) {
           const messageContent = message.content.toString()
           console.log(`Message received through queue: ${queue}: ${messageContent}`)
-          await handler.handle(messageContent)
+          const parsedMessage = JSON.parse(messageContent)
+          await handler.handle(parsedMessage)
           this.channel.ack(message)
         }
       })
