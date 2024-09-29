@@ -73,8 +73,11 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v2
 
+      - name: 🛠️ Install Snyk CLI
+        run: npm install -g snyk
+
       - name: 📦 Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: 🛡️ Run Snyk to Check for Vulnerabilities
         run: snyk test --all-projects
