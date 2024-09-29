@@ -44,7 +44,6 @@ export class SignUp implements ISignUp {
         await this._emitter.publish({
           queue,
           message: {
-            type,
             email,
             name,
             ...customAttributes

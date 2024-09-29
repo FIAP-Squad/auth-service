@@ -35,7 +35,6 @@ const mockGatewayParams = (): any => ({
 const mockQueueEvent = (): any => ({
   queue: mockEventParams().queue,
   message: {
-    type: mockUseCaseParams().type,
     email: mockUseCaseParams().email,
     name: mockUseCaseParams().name,
     cpf: mockUseCaseParams().customAttributes.cpf,
