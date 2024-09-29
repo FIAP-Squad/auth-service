@@ -1,7 +1,7 @@
-import { EmitterGateway, EventMapDAO, type IHandler, IdentityGateway, IdentityRequestedHandler } from '@/infrastructure'
+import { EmitterGateway, EventMapDAO, type Handler, IdentityGateway, IdentityRequestedHandler } from '@/infrastructure'
 import { SignUp } from '@/usecases'
 
-export const identityRequestedHandler = (): IHandler => {
+export const identityRequestedHandler = (): Handler => {
   const DAO = new EventMapDAO()
   const gateway = new IdentityGateway()
   const emitter = new EmitterGateway()
