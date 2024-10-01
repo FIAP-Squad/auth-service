@@ -8,9 +8,9 @@ on:
       - main
 
 env:
-  AWS_REGION: us-east-2  # Corrigido para alinhar com a URI ECR fornecida
-  ECR_REGISTRY: 883634453599.dkr.ecr.us-east-2.amazonaws.com
-  ECR_REPOSITORY: hospital/doctors-management-service
+  AWS_REGION: us-east-1  
+  ECR_REGISTRY: 883634453599.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY: hospital/auth-service
 
 jobs:
   build-and-push:
